@@ -90,11 +90,15 @@ while (genre<1) | (genre>7):
     genre = int(input("\nInvalid genre! Try again: "))
 
 rating = (input("\nWhat rating on a scale of 1.0 - 10.0 are you looking for? Ratings must be written as a number followed by one decimal place, such as 1.0, 1.1, 1.2...\n"))
-while '.' not in rating:
-    rating = (input("\nMissing decimal point! Try again: "))
-while ((float(rating)<1.0) | (float(rating)>10.0)) | (len(rating.split('.')[1])>1):
-    rating = (input("\nOut of range! Try again: "))
 
+while True:
+    if '.' not in rating:
+        rating = (input("\nMissing decimal point! Try again: "))
+        continue
+    if ((float(rating) < 1.0) | (float(rating) > 10.0)) | (len(rating.split('.')[1]) > 1):
+        rating = (input("\nOut of range! Try again: "))
+        continue
+    break
 rating = float(rating)
 
 #converting the imdb ID column (tconst) into a list to iterate through
