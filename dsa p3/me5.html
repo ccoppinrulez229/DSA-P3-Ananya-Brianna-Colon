@@ -1,0 +1,43 @@
+<html><head>
+<script type="text/javascript">
+   function writeSong()
+    {
+     word1a = document.forms[0].word1a.value;
+     word1b = document.forms[0].word1b.value;
+     word2a = document.forms[0].word2a.value;
+     word2b = document.forms[0].word2b.value;
+     verb1 = document.forms[0].verb1.value;
+     verb2 = document.forms[0].verb2.value;
+     results = window.top.results.document;
+     
+     results.write("<blockquote><h1>I don't wanna</h1>" +
+          "<br>I don't wanna " + word1a +
+          "<br>I don't wanna " + word1b +
+          "<br>I just wanna " + verb1 + " around " +
+          "<br>And " + verb2 + " my neighbor's " + word2b +
+          "<br><br>I don't wanna " + word2a +
+          "<br>I don't wanna " + word1a +
+          "<br>I just wanna " + verb2 + " on you " +
+          "<br>And " + verb1 + " your stinking " + word1b +
+          "<br><br>I don't wanna" +
+          "<br>I don't wanna" +
+          "<br>I don't wanna");
+		  }
+ </script></head>
+<body style="background-color:lightgrey;">
+<h1>Punk Rock Lyric Generator</h1>
+  <form style="float:left">
+   <p>Favorite noun: <br><input type="text" name="word1a">
+   <br>A rhyming word <br><input type="text" name="word1b"></p>
+   
+   <p>Least favorite noun: <br><input type="text" name="word2a">
+   <br>A rhyming word: <br><input type="text" name="word2b"></p>
+   
+   <p>An action verb: <br><input type="text" name="verb1">
+   <br>Favorite curse word: <br><input type="text" name="verb2"></p>
+   <p><input type="button" value="Write a Song" onclick="writeSong()"></p>
+ </form>
+ <iframe width="400" height="380" name="results" style="background:white">
+ </iframe>
+</body>
+</html>
