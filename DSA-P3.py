@@ -14,50 +14,20 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for cross-origin requests
 
 
-@app.route('/get_recommendations', methods=['POST'])
-def get_recommendations():
-    data = request.get_json()
-    genres = data.get('genres', [])
-    speed = data.get('speed', 'fast')
+def chooseRating():
+    rating = (input(
+        "\nWhat rating on a scale of 1.0 - 10.0 are you looking for? Ratings must be written as a number followed by one decimal place, such as 1.0, 1.1, 1.2...\n"))
 
-    if speed == 'fast':
-        heap = Movie_Max_Heap(10000)
-        for id in titlesList:
-            movie = web.get_title(id)
-            if movie and movie.rating and hasattr(movie, 'genres'):
-                if any(g.lower() in [x.lower() for x in movie.genres] for g in genres):
-                    heap.insert(movie)
-        movies = []
-        for _ in range(3):
-            max_rating = heap.ReturnMax()
-            if max_rating in heap.map:
-                title = heap.map[max_rating].pop()
-                movies.append({
-                    'title': title,
-                    'rating': max_rating,
-                    'genres': genres,
-                    'posterUrl': ''
-                })
-        return jsonify({'movies': movies})
-
-    elif speed == 'slow':
-        rbt = redBlackTree()
-        for id in titlesList:
-            movie = web.get_title(id)
-            if movie and movie.rating and hasattr(movie, 'genres'):
-                if any(g.lower() in [x.lower() for x in movie.genres] for g in genres):
-                    rbt.insert(movie)
-        top_movies = rbt.get_top_k(3)
-        return jsonify({'movies': [{
-            'title': m.title,
-            'rating': m.rating,
-            'genres': m.genres,
-            'posterUrl': ''
-        } for m in top_movies]})
-
-    return jsonify({'movies': []})
-
-
+    while True:
+        if '.' not in rating:
+            rating = (input("\nMissing decimal point! Try again: "))
+            continue
+        if ((float(rating) < 1.0) | (float(rating) > 10.0)) | (len(rating.split('.')[1]) > 1):
+            rating = (input("\nOut of range! Try again: "))
+            continue
+        break
+    rating = float(rating)
+    return rating
 
 #referred to geeksforgeeks for assisting with Red-Black Tree
 class Movie:
@@ -72,10 +42,19 @@ class Movie:
 
 #function will choose a random movie from the list of movie classes based on rating
 def ChooseMovie(movies):
-    if len(movies)==0:
+    movie_list = list(movies)
+    returned_movie_list = list()
+    if len(movie_list)==0:
         return None
-    movie = random.choice(movies)
-    return movie
+    while (len(returned_movie_list)!=3) | (len(movie_list)!=0):
+        if (len(movie_list)==0) | (len(returned_movie_list)==3):
+            break
+        movie = random.choice(movie_list)
+        movie_list.remove(movie)
+        returned_movie_list.append(movie)
+
+
+    return returned_movie_list
 
 class rbNode:
     def __init__(self, rating, color='red'):
@@ -149,6 +128,7 @@ class redBlackTree:
 
         if self.root is None:
             newNode = rbNode(rating)
+            newNode.movies.append(movie)
             self.root = newNode
         else:
             currNode = self.root
@@ -162,6 +142,7 @@ class redBlackTree:
                 if rating < currNode.rating:
                     if currNode.left is None:
                         newNode = rbNode(rating)
+                        newNode.movies.append(movie)
                         currNode.left = newNode
                         newNode.parent = currNode
                         break
@@ -172,6 +153,7 @@ class redBlackTree:
                 else:
                     if currNode.right is None:
                         newNode = rbNode(rating)
+                        newNode.movies.append(movie)
                         currNode.right = newNode
                         newNode.parent = currNode
                         break
@@ -219,12 +201,48 @@ class redBlackTree:
         leftChild.right = node
         node.parent = leftChild
 
+    # given a rating, find a random movie of that rating
+    def selectMovie(self, rating):
+        currNode = self.root
+        while currNode is not None:
+            if currNode.rating == rating:
+                if (len(currNode.movies) <= 3 and len(currNode.movies) > 0):
+                    return currNode.movies
+                else:
+                    return random.sample(currNode.movies, 3)
+            elif rating < currNode.rating:
+                currNode = currNode.left
+            else:
+                currNode = currNode.right
+
+        return None
+
+
     # function to perform inorder traversal
     def inorderTraversal(self, node):
         if node is not None:
             self.inorderTraversal(node.left)
-            print(node.value, end=" ")
+            for movie in node.movies:
+                print(movie.title, movie.rating)
             self.inorderTraversal(node.right)
+
+    def getHighestRating(self):
+        currNode = self.root
+        while currNode.right is not None:
+            if currNode.rating < currNode.right.rating:
+                currNode = currNode.right
+
+        return currNode.rating
+
+    def getLowestRating(self):
+        currNode = self.root
+        while currNode.left is not None:
+            if currNode.left.rating < currNode.rating:
+                currNode = currNode.left
+
+        return currNode.rating
+
+
 
 
 #Referred to GeeksForGeeks for assisting with creating Max Heap structure
@@ -237,6 +255,7 @@ class Movie_Max_Heap:
         self.current_num_of_elements = 0
         self.heap_array = [0] * (limit + 1)
         self.heap_array[0] = sys.maxsize
+        self.ratings_set = set()
 
     def parent(self, i):
         return i // 2
@@ -271,6 +290,7 @@ class Movie_Max_Heap:
         if movieNode.rating not in self.map:
             self.map[movieNode.rating] = set()
         self.map[movieNode.rating].add(movieNode)
+        self.ratings_set.add(movieNode.rating)
         #print(self.map)
         if self.current_num_of_elements >= self.limit:
             return
@@ -317,12 +337,110 @@ if __name__ == "__main__":
     #Download title.basics.tsv.gz file from imdb to use for project, placing it in the same directory as the py file.
     # Might have to remove from directory before pushing to git
     #referred to pandas documentation to figure out how to traverse tsv file
+    print("Loading movie dataset...\n")
     imdb_movies = pd.read_csv("movie_and_ratings.csv", low_memory=False)
 
+    print(
+        "Welcome to Kuromi's Movie Picker! \n1.Action \n2.Adventure\n3.Animation\n4.Comedy\n5.Horror\n6.Dystopian\n7.Mystery")
+    genre = (input("\nChoose a genre (Type the number): "))
+    while True:
+        if not genre.isdigit():
+            genre = int(input("\nInput is not a number! Try again: "))
+            continue
+        if (int(genre) < 1) | (int(genre) > 7):
+            genre = int(input("\nInvalid genre! Try again: "))
+            continue;
+        break
+
+    method = (input("\nWhat method would you like to use? Type 'heap' for a Max Heap, or type 'tree' for Red-Black Tree: "))
+    while True:
+        if (method == "heap") | (method=="tree"):
+            break
+        method = (input("Invalid option! Try again: \n"))
+
+    # comedy, drama, romance, crime, action, mystery, thriller, adventure, animation, horror, biography, Sci-Fi, music, sport, war, fantasy, documentary
+    genre_map = {"1": "Action",
+                 "2": "Adventure",
+                 "3": "Animation",
+                 "4": "Comedy",
+                 "5": "Horror",
+                 "6": "Dystopian",
+                 "7": "Mystery"
+                 }
+
+    # only leaving movies that are of the selected genre in the dataframe
+    imdb_movies = imdb_movies[imdb_movies['genres'].str.contains(genre_map[genre], na=False)]
+
+    #variable for the movie class that ends up being chosen at the end of program execution.
+    movie_chosen = None
+
+    movie_count=0
+
+    if method == "heap":
+        max_heap = Movie_Max_Heap(10000)
+
+        #traverse the movie list and add valid movies to the heap
+
+        for row in imdb_movies.itertuples():
+
+            # tconst,titleType,primaryTitle,originalTitle,startYear,runtimeMinutes,genres,averageRating,numVotes
+            movieID = row.tconst
+            movieTitle = row.primaryTitle
+            movieYear = row.startYear
+            movieRuntime = row.runtimeMinutes
+            movieGenres = row.genres
+            movieRating = row.averageRating
+            movieVoteCount = row.numVotes
+            moviePlot = "none"
+
+            movieObj = Movie(movieTitle, movieYear, movieRuntime, movieGenres, moviePlot, movieRating, movieVoteCount)
+            max_heap.insert(movieObj)
+
+        lowestRatingIndex = min(max_heap.ratings_set)
+        #print(max_heap.heap_array[len(max_heap.heap_array)-2])
+
+        print(f"\nThe highest rated movie of the {genre_map[genre]} genre is {max_heap.heap_array[1]}.")
+        print(f"\nThe lowest rated movie of the {genre_map[genre]} genre is {lowestRatingIndex}.")
+        rating = chooseRating()
+        #once all movies added to heap, traverse the heap to select a movie
+        movie_chosen = max_heap.TraverseToRating(rating)
+
+    else:
+        rbTree = redBlackTree()
+
+        for row in imdb_movies.itertuples():
+
+            # tconst,titleType,primaryTitle,originalTitle,startYear,runtimeMinutes,genres,averageRating,numVotes
+            movieID = row.tconst
+            movieTitle = row.primaryTitle
+            movieYear = row.startYear
+            movieRuntime = row.runtimeMinutes
+            movieGenres = row.genres
+            movieRating = row.averageRating
+            movieVoteCount = row.numVotes
+            moviePlot = "none"
+
+            movieObj = Movie(movieTitle, movieYear, movieRuntime, movieGenres, moviePlot, movieRating, movieVoteCount)
+            rbTree.insert(movieObj)
+
+        print(f"\nThe highest rated movie of the {genre_map[genre]} genre is {rbTree.getHighestRating()}.\nThe lowest rated movie of the {genre_map[genre]} genre is {rbTree.getLowestRating()}")
+        rating = chooseRating()
+
+        movie_chosen = rbTree.selectMovie(rating)
+
+    if movie_chosen == None:
+        print(f"Movie with rating {rating} could not be found!")
+    else:
+        print(f"\nKuromi has made a decision. Tonight's top movies chosen for movie night will be.... ")
+        for movie in movie_chosen:
+            print(f"\n{movie.title}\nRating: {movie.rating}\nYear: {movie.year}\nGenres: {movie.genres}\nPlot: {movie.plot}\nNumber of Votes: {movie.num_votes}\n\n")
+
+    ################ code for shrinking imdb dataset file #############################
     # #imdb_titles is our table of movies. filter out any non-movies or adult content.
     # #referred to IDMB's non commercial dataset documentation to figure out the syntax for identifying movies
+    # imdb_titles = pd.read.csv("title.basics.tsv", sep='\t', low_memory=False)
     # imdb_titles = imdb_movies[(imdb_movies['titleType'] == 'movie') | (imdb_movies['titleType'] == 'tvMovie')]
-    # imdb_titles = imdb_titles[(imdb_titles['startYear'] >= '1990') & (imdb_titles['startYear'] <= '2025')]
+    # imdb_titles = imdb_titles[(imdb_titles['startYear'] >= '1960') & (imdb_titles['startYear'] <= '2025')]
     # imdb_titles = imdb_titles[imdb_titles['isAdult'] == '0']
     # imdb_titles = imdb_titles.replace(to_replace='\\N', value='NA')
     # imdb_titles = imdb_titles.drop(['isAdult', 'endYear'], axis=1)
@@ -345,85 +463,64 @@ if __name__ == "__main__":
     #
     # movie_and_ratings.to_csv("movie_and_ratings.csv", index=False)
 
-    print(
-        "Welcome to Kuromi's Movie Picker! \n1.Action \n2.Adventure\n3.Animation\n4.Comedy\n5.Horror\n6.Dystopian\n7.Mystery")
-    genre = (input("\nChoose a genre (Type the number): "))
-    while True:
-        if not genre.isdigit():
-            genre = int(input("\nInput is not a number! Try again: "))
-            continue
-        if (int(genre) < 1) | (int(genre) > 7):
-            genre = int(input("\nInvalid genre! Try again: "))
-            continue;
-        break
+    @app.route('/get_recommendations', methods=['POST'])
+    def get_recommendations():
+        data = request.get_json()
+        genres = data.get('genres', [])
+        speed = data.get('speed', 'fast')
 
-    rating = (input("\nWhat rating on a scale of 1.0 - 10.0 are you looking for? Ratings must be written as a number followed by one decimal place, such as 1.0, 1.1, 1.2...\n"))
+        imdb_movies = pd.read_csv("movie_and_ratings.csv", low_memory=False)
+        imdb_movies = imdb_movies[imdb_movies['genres'].str.contains('|'.join(genres), case=False, na=False)]
 
-    genre_map = {"1":"Action",
-                 "2":"Adventure",
-                 "3":"Animation",
-                 "4":"Comedy",
-                 "5":"Horror",
-                 "6":"Dystopian",
-                 "7":"Mystery"
-                 }
+        movies = []
 
-    while True:
-        if '.' not in rating:
-            rating = (input("\nMissing decimal point! Try again: "))
-            continue
-        if ((float(rating) < 1.0) | (float(rating) > 10.0)) | (len(rating.split('.')[1]) > 1):
-            rating = (input("\nOut of range! Try again: "))
-            continue
-        break
-    rating = float(rating)
+        if speed == 'fast':
+            heap = Movie_Max_Heap(10000)
+            for row in imdb_movies.itertuples():
+                movie = Movie(
+                    row.primaryTitle,
+                    row.startYear,
+                    row.runtimeMinutes,
+                    row.genres,
+                    "none",
+                    row.averageRating,
+                    row.numVotes
+                )
+                heap.insert(movie)
+            for _ in range(3):
+                rating = heap.ReturnMax()
+                if rating in heap.map and heap.map[rating]:
+                    movie_obj = heap.map[rating].pop()
+                    movies.append({
+                        'title': movie_obj.title,
+                        'rating': movie_obj.rating,
+                        'genres': movie_obj.genres,
+                        'posterUrl': ''
+                    })
 
-    method = (input("What method would you like to use? Type 'heap' for a Max Heap, or type 'tree' for Red-Black Tree.\n"))
-    while True:
-        if (method == "heap") | (method=="tree"):
-            break
-        method = (input("Invalid option! Try again: \n"))
+        else:
+            rbt = redBlackTree()
+            for row in imdb_movies.itertuples():
+                movie = Movie(
+                    row.primaryTitle,
+                    row.startYear,
+                    row.runtimeMinutes,
+                    row.genres,
+                    "none",
+                    row.averageRating,
+                    row.numVotes
+                )
+                rbt.insert(movie)
 
-    #converting the imdb ID column (tconst) into a list to iterate through
-    titlesList = imdb_movies['tconst'].values.tolist()
-    print(len(titlesList))
+            top_movies = rbt.selectMovie(float(imdb_movies['averageRating'].max()))
+            if top_movies:
+                for m in top_movies[:3]:
+                    movies.append({
+                        'title': m.title,
+                        'rating': m.rating,
+                        'genres': m.genres,
+                        'posterUrl': ''
+                    })
 
-    #variable for the movie class that ends up being chosen at the end of program execution.
-    movie_chosen = None
-
-    if method == "heap":
-        max_heap = Movie_Max_Heap(10000)
-
-        #traverse the movie list and add valid movies to the heap
-
-        for id in titlesList:
-            movie = web.get_title(id)
-            #will only insert movies into the heap that are present in the list and have a rating that isn't None
-            if (movie != None) and (movie.rating != None):
-                #create a new node for the movie that will then be inserted into the data structure
-                movie_node = Movie(movie.title, movie.year, movie.runtime, movie.genres, movie.plot, movie.rating, movie.vote_count)
-                if (genre_map[genre] in movie_node.genres[0]): #will only add movies to the structure if it has a genre specified by a user in its list
-                    print(f"Movie: {movie_node.title} | Year: {movie_node.year} | Runtime: {movie_node.runtime} | Genres: {movie_node.genres} | Plot: {movie_node.plot} | Rating: {movie_node.rating} | Vote Count: {movie_node.num_votes}")
-                    max_heap.insert(movie_node)
-
-        #once all movies added to heap, traverse the heap to select a movie
-        movie_chosen = max_heap.TraverseToRating(rating)
-
-
-
-    else:
-        rbTree = redBlackTree()
-        for id in titlesList:
-            movie = web.get_title(id)
-            #will only insert movies into the heap that are present in the list and have a rating that isn't None
-            if (movie != None) and (movie.rating != None):
-                #create a new node for the movie that will then be inserted into the data structure
-                movieObj = Movie(movie.title, movie.year, movie.runtime, movie.genres, movie.plot, movie.rating,movie.vote_count)
-                if (genre_map[genre] in movieObj.genres[0]): #will only add movies to the structure if it has a genre specified by a user in its list
-                    rbTree.insert(movieObj)
-
-    if movie_chosen == None:
-        print(f"Movie with rating {rating} could not be found!")
-    else:
-        print(f"Kuromi has made a decision. Tonight's movie night will be.... {movie_chosen.title}!\nRating: {movie_chosen.rating}\nYear: {movie_chosen.year}\nGenres: {movie_chosen.genres}\nPlot: {movie_chosen.plot}\nNumber of Votes: {movie_chosen.num_votes}")
+        return jsonify({'movies': movies})
 
