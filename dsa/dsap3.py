@@ -8,9 +8,38 @@ import sys
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import random
+import requests
+
+poster_cache = {}
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for cross-origin requests
+from flask import send_file
+
+@app.route('/sunghoon')
+def serve_sunghoon():
+    return send_file('sunghooned.jpg', mimetype='image/jpg')
+
+
+def fetch_poster(title):
+
+    api_key = "44166db2"
+
+    url = f"http://www.omdbapi.com/?t={title}&apikey={api_key}"
+    
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            print(f"OMDb result for '{title}':", data)
+            poster_url = data["Poster"]
+            if poster_url and poster_url != "N/A":
+                return poster_url
+            else:
+                return "/sunghoon"    
+    except Exception as e:
+        print(f"Error fetching poster for {title}: {e}")
+
 
 
 
@@ -24,6 +53,7 @@ class Movie:
         self.plot = plot
         self.rating = rating
         self.num_votes = numOfVotes
+        self.posterUrl = None
 
 #function will choose a random movie from the list of movie classes based on rating
 def ChooseMovie(movies):
@@ -308,11 +338,23 @@ def get_recommendations():
     genres = request.args.getlist('genres')
     method = request.args.get('method', 'fast')
 
-    imdb_movies = pd.read_csv("movie_and_ratings.csv", low_memory=False)
-
+    imdb_movies = pd.read_csv("movie_ratings_plots.csv", low_memory=False)
     if genres:
-        imdb_movies = imdb_movies[imdb_movies['genres'].str.contains('|'.join(genres), case=False, na=False)]
+        genre_pattern = '|'.join([g.lower() for g in genres])
+        imdb_movies = imdb_movies[imdb_movies['genres'].str.lower().str.contains(genre_pattern, na=False)]
 
+
+    min_rating_string = request.args.get('minrating')
+    max_rating_string = request.args.get('maxrating')
+    try:
+        if min_rating_string:
+            min_rating = float(min_rating_string)
+            imdb_movies = imdb_movies[imdb_movies['averageRating'] >= min_rating]
+        if max_rating_string:
+            max_rating = float(max_rating_string)
+            imdb_movies = imdb_movies[imdb_movies['averageRating'] <= max_rating]
+    except ValueError:
+        pass
     if imdb_movies.empty:
         return jsonify({'movies': []})
 
@@ -326,10 +368,11 @@ def get_recommendations():
                 row.startYear,
                 row.runtimeMinutes,
                 row.genres,
-                "none",
+                row.plot,
                 row.averageRating,
                 row.numVotes
             )
+            print(row.plot)
             heap.insert(movie)
 
         movie_objs = []
@@ -350,12 +393,16 @@ def get_recommendations():
                     break
 
         for movie_obj in movie_objs:
+            movie_obj.posterUrl = fetch_poster(movie_obj.title)
             movies.append({
                 'title': movie_obj.title,
                 'rating': movie_obj.rating,
                 'genres': movie_obj.genres,
-                'posterUrl': ''
+                'posterUrl': movie_obj.posterUrl,
+                'plot': movie_obj.plot
             })
+
+
 
     else:  # Red-Black Tree
         rbt = redBlackTree()
@@ -365,7 +412,7 @@ def get_recommendations():
                 row.startYear,
                 row.runtimeMinutes,
                 row.genres,
-                "none",
+                row.plot,
                 row.averageRating,
                 row.numVotes
             )
@@ -387,12 +434,15 @@ def get_recommendations():
         reverse_inorder(rbt.root)
 
         for movie_obj in movie_objs:
+            movie_obj.posterUrl = fetch_poster(movie_obj.title)
             movies.append({
                 'title': movie_obj.title,
                 'rating': movie_obj.rating,
                 'genres': movie_obj.genres,
-                'posterUrl': ''
+                'posterUrl': movie_obj.posterUrl,
+                'plot': movie_obj.plot
             })
+
 
     return jsonify({'movies': movies})
 
@@ -401,7 +451,7 @@ if __name__ == "__main__":
     # Might have to remove from directory before pushing to git
     #referred to pandas documentation to figure out how to traverse tsv file
     print("Loading movie dataset...\n")
-    imdb_movies = pd.read_csv("movie_and_ratings.csv", low_memory=False)
+    imdb_movies = pd.read_csv("movie_ratings_plots.csv", low_memory=False)
     app.run(debug=True)
 #     print(
 #         "Welcome to Kuromi's Movie Picker! \n1.Action \n2.Adventure\n3.Animation\n4.Comedy\n5.Horror\n6.Dystopian\n7.Mystery")
@@ -488,7 +538,7 @@ if __name__ == "__main__":
 #             movieGenres = row.genres
 #             movieRating = row.averageRating
 #             movieVoteCount = row.numVotes
-#             moviePlot = "none"
+#             moviePlot = row.plot
 
 #             movieObj = Movie(movieTitle, movieYear, movieRuntime, movieGenres, moviePlot, movieRating, movieVoteCount)
 #             rbTree.insert(movieObj)

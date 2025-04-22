@@ -35,9 +35,9 @@
                 <p class="txt">Horror</p>
             </label>
             <label class="checkbox-label">
-                <input type="checkbox" name="genre" value="dystopian">
+                <input type="checkbox" name="genre" value="drama">
                 <span class="checkmark"></span>
-                <p class="txt">Dystopian</p>
+                <p class="txt">drama</p>
             </label>
             <label class="checkbox-label">
                 <input type="checkbox" name="genre" value="mystery">
@@ -49,16 +49,34 @@
                 <span class="checkmark"></span>
                 <p class="txt">Animated</p>
             </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="genre" value="romance">
+                <span class="checkmark"></span>
+                <p class="txt">Romance</p>
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="genre" value="sci-fi">
+                <span class="checkmark"></span>
+                <p class="txt">Sci-Fi</p>
+            </label>
             <br><br>
+
+            <label class="rating-label">
+                <p class="rating-text">What rating range do you want? (1.0-10.0)</p>
+                <input type="number" class="rating" id="minrating" min="1" max="9" step="0.1" placeholder="ex. 6.0">
+                <input type="number" class="rating" id="maxrating" min="1" max="9" step="0.1" placeholder="ex. 8.5">
+            </label>
+            <br><br>
+    
             <div class="radio-wrapper">
                 <p class="urgency-text">How badly do you need to give these recommendations?</p>
                 <label class="radio-label">
                     <input type="radio" name="speed" value="fast" checked>
-                    <span class="radio-txt">it's very urgent i need to do it right neow</span>
+                    <span class="radio-txt">it's very urgent i need to do it right neow (maxheap)</span>
                 </label>
                 <label class="radio-label">
                     <input type="radio" name="speed" value="slow">
-                    <span class="radio-txt">i can wait</span>
+                    <span class="radio-txt">i can wait (red black tree) </span>
                 </label>
             </div>
             <br><br>

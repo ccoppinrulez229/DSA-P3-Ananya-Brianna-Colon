@@ -39,6 +39,8 @@ body {
     margin: 0 auto;
     flex-wrap: wrap;
     gap: 15px;
+    padding-top: 40px;
+    padding-bottom: 40px;
 }
 
 #poster {
@@ -75,12 +77,10 @@ body {
 
 #lady {
     position: fixed;
-    width: 100px;
-    display: block;
-    margin: 0;
-    margin-top: -55px;
-    padding: 0;
-    z-index: 1000;
+    bottom: 30px;
+    left: 10px;
+    width: 120px;
+    /* z-index: 9999; */
 }
 
 #Done {
@@ -128,7 +128,7 @@ footer {
 .radio-wrapper {
     width: 100%;
     text-align: center;
-    margin-top: 20px;
+    margin-top: 0px;
 }
 
 .radio-label {
@@ -141,4 +141,28 @@ footer {
 .radio-txt {
     padding-left: 10px;
     color: #4d4d4d;
+}
+
+.rating {
+    display: inline-block;
+    margin-bottom: 10px;
+    font-family: 'Silkscreen', monospace;
+    cursor: pointer;
+    text-align: center;
+    width: 18%;
+    border: 0;
+    border-bottom: 1px solid #ccc;
+}
+.rating-txt {
+    padding-left: 10px;
+    color: #4d4d4d;
+    margin-top: 20px;
+}
+
+.rating-label {
+    width: 100%;
+    text-align: center;
+    margin-top: 20px;
+    display: block;
+    font-family: 'Silkscreen', monospace;
 }

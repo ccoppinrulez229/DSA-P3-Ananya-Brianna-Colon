@@ -46,6 +46,7 @@ header .results-box {
     border-radius: 5px;
     margin-left: 12px;
     display: block;
+    margin-top: 30px;
 }
 
 .movie-info {

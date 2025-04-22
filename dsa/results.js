@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', function () {
     selectedGenres.forEach(genre => params.append('genres', genre));
     params.append('method', method);
 
+    const minRating = localStorage.getItem('minrating') || 0;
+    const maxRating = localStorage.getItem('maxrating') || 10;
+    if(minRating) params.append('minrating', minRating);
+    if(maxRating) params.append('maxrating', maxRating);
+
+
     fetch(`http://localhost:5000/get_recommendations?${params.toString()}`)
         .then(response => {
             if (!response.ok) throw new Error('Network response was not ok');
@@ -19,32 +25,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            const resultsContainer = document.getElementById('resultsContainer');
+
             for (let i = 0; i < Math.min(movies.length, 3); i++) {
                 const movie = movies[i];
+            
+                const movieBox = document.createElement('div');
+                movieBox.classList.add('movie-container');
+            
+                movieBox.innerHTML = `
+                    <div class="poster-container">
+                        <img src="${movie.posterUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/450px-No_image_available.svg.png'}" alt="Movie Poster" class="poster"/>
 
-                const allBoxes = document.querySelectorAll('.results-box');
-                const resultBox = allBoxes[i + 1]; 
-
-                if (!resultBox) {
-                    console.warn(`resultBox ${i + 1} not found`);
-                    continue;
-                }
-
-                const titleElement = resultBox.querySelector('h2');
-                if (titleElement) titleElement.textContent = movie.title;
-
-                const ratingElement = resultBox.querySelector('.rating');
-                if (ratingElement) ratingElement.textContent = movie.rating;
-
-                const genresElement = resultBox.querySelector('.genres');
-                if (genresElement) genresElement.textContent = Array.isArray(movie.genres) ? movie.genres.join(', ') : movie.genres;
-
-                const posterElement = resultBox.querySelector('.poster');
-                if (posterElement && movie.posterUrl) {
-                    posterElement.src = movie.posterUrl;
-                }
-
+                    </div>
+                    <div class="movie-info">
+                        <h2>${movie.title}</h2><br>
+                        <p>Rating: <span class="rating">${movie.rating}</span></p>
+                        <p>Genre: <span class="genres">${Array.isArray(movie.genres) ? movie.genres.join(', ') : movie.genres}</span></p>
+                        <p>Plot: <span class="plot">${movie.plot}</span></p>
+                    </div>
+                `;
+            
+                resultsContainer.appendChild(movieBox);
             }
+            console.log("Movie data:", data.movies);
+
         })
         .catch(error => {
             console.error('Error fetching recommendations:', error);

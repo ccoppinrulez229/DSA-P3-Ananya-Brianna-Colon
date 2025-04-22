@@ -9,5 +9,9 @@ document.getElementById('Done').addEventListener('click', function() {
     const methodElement = document.querySelector('input[name="speed"]:checked');
     const method = methodElement ? methodElement.value : 'fast';
     localStorage.setItem('method', method);
+   const minRating = document.getElementById('minrating')?.value;
+    const maxRating = document.getElementById('maxrating')?.value;
+    localStorage.setItem('minrating', minRating);
+    localStorage.setItem('maxrating', maxRating);
     window.location.href = 'movie results.html';
 });
