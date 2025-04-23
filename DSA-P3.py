@@ -1,6 +1,8 @@
 #install cinemagoerng and pandas packages within PyCharm
 #skibidi
 
+import omdb
+import requests
 from cinemagoerng import web
 from pandasql import sqldf
 import pandas as pd
@@ -39,6 +41,9 @@ class Movie:
         self.plot = plot
         self.rating = rating
         self.num_votes = numOfVotes
+        self.poster = None
+
+
 
 #function will choose a random movie from the list of movie classes based on rating
 def ChooseMovie(movies):
@@ -217,15 +222,6 @@ class redBlackTree:
 
         return None
 
-
-    # function to perform inorder traversal
-    def inorderTraversal(self, node):
-        if node is not None:
-            self.inorderTraversal(node.left)
-            for movie in node.movies:
-                print(movie.title, movie.rating)
-            self.inorderTraversal(node.right)
-
     def getHighestRating(self):
         currNode = self.root
         while currNode.right is not None:
@@ -334,20 +330,21 @@ class Movie_Max_Heap:
 
 
 if __name__ == "__main__":
+
     #Download title.basics.tsv.gz file from imdb to use for project, placing it in the same directory as the py file.
     # Might have to remove from directory before pushing to git
     #referred to pandas documentation to figure out how to traverse tsv file
     print("Loading movie dataset...\n")
-    imdb_movies = pd.read_csv("movie_and_ratings.csv", low_memory=False)
+    imdb_movies = pd.read_csv("movie_ratings_plots.csv", low_memory=False)
 
     print(
-        "Welcome to Kuromi's Movie Picker! \n1.Action \n2.Adventure\n3.Animation\n4.Comedy\n5.Horror\n6.Dystopian\n7.Mystery")
+        "Welcome to Kuromi's Movie Picker! \n1.Action \n2.Adventure\n3.Animation\n4.Comedy\n5.Horror\n6.Drama\n7.Mystery\n8.Romance\n9.Sci-Fi")
     genre = (input("\nChoose a genre (Type the number): "))
     while True:
         if not genre.isdigit():
             genre = int(input("\nInput is not a number! Try again: "))
             continue
-        if (int(genre) < 1) | (int(genre) > 7):
+        if (int(genre) < 1) | (int(genre) > 9):
             genre = int(input("\nInvalid genre! Try again: "))
             continue;
         break
@@ -364,8 +361,10 @@ if __name__ == "__main__":
                  "3": "Animation",
                  "4": "Comedy",
                  "5": "Horror",
-                 "6": "Dystopian",
-                 "7": "Mystery"
+                 "6": "Drama",
+                 "7": "Mystery",
+                 "8": "Romance",
+                 "9": "Sci-Fi"
                  }
 
     # only leaving movies that are of the selected genre in the dataframe
@@ -391,7 +390,7 @@ if __name__ == "__main__":
             movieGenres = row.genres
             movieRating = row.averageRating
             movieVoteCount = row.numVotes
-            moviePlot = "none"
+            moviePlot = row.plot
 
             movieObj = Movie(movieTitle, movieYear, movieRuntime, movieGenres, moviePlot, movieRating, movieVoteCount)
             max_heap.insert(movieObj)
@@ -418,7 +417,7 @@ if __name__ == "__main__":
             movieGenres = row.genres
             movieRating = row.averageRating
             movieVoteCount = row.numVotes
-            moviePlot = "none"
+            moviePlot = row.plot
 
             movieObj = Movie(movieTitle, movieYear, movieRuntime, movieGenres, moviePlot, movieRating, movieVoteCount)
             rbTree.insert(movieObj)
@@ -433,6 +432,8 @@ if __name__ == "__main__":
     else:
         print(f"\nKuromi has made a decision. Tonight's top movies chosen for movie night will be.... ")
         for movie in movie_chosen:
+
+
             print(f"\n{movie.title}\nRating: {movie.rating}\nYear: {movie.year}\nGenres: {movie.genres}\nPlot: {movie.plot}\nNumber of Votes: {movie.num_votes}\n\n")
 
     ################ code for shrinking imdb dataset file #############################
