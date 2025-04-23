@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap');
+
+body {
+    font-family: "Silkscreen", monospace;
+    background-color: #A7C7E7;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-bottom: 200px;
+    background-image: url("red ocean.webp");
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow-x: hidden;
+}
+
+header .results-box {
+    text-align: center;
+}
+
+.results-box {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 30px 30px 30px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+.movie-container {
+    display: flex;
+    gap: 20px;
+}
+
+.poster-container {
+    /* flex: 0 0 auto;
+    max-width: 200px; */
+    width: 200px;
+}
+
+.poster {
+    width: 75%;
+    height: auto;
+    border-radius: 5px;
+    margin-left: 12px;
+    display: block;
+    margin-top: 30px;
+}
+
+.movie-info {
+    flex: 1;
+    padding-left: 20px;
+}
+
+.movie-info p {
+    line-height: 1.5;
+    margin: 0 0 10px 0;
+}
